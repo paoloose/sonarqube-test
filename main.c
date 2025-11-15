@@ -2,6 +2,25 @@
 #include <string.h>
 
 #define MAX_PASSWORD_LEN 32
+#define MAX_INPUT_LEN 1024
+
+// Safer string functions
+size_t safe_strlen(const char *s, size_t max_size) {
+    size_t i = 0;
+    while (i < max_size && s[i] != '\0') {
+        i++;
+    }
+    return i;
+}
+
+void safe_strcpy(char *dest, const char *src, size_t dest_size) {
+    size_t i = 0;
+    while (i < dest_size - 1 && src[i] != '\0') {
+        dest[i] = src[i];
+        i++;
+    }
+    dest[i] = '\0';
+}
 
 // ================= SHOWCASE DE COMPLEJIDAD CICLOMÁTICA =================
 
@@ -78,8 +97,8 @@ int extremeDecision(int x, int y) {
 void validatePassword(char* inputPassword) {
     char password[MAX_PASSWORD_LEN];
     // Vulnerabilidad: no se valida el tamaño de inputPassword
-    strcpy(password, inputPassword);  // BUFFER OVERFLOW
-    if (strlen(password) < 8) {
+    safe_strcpy(password, inputPassword, MAX_PASSWORD_LEN);  // Ahora seguro
+    if (safe_strlen(password, MAX_PASSWORD_LEN) < 8) {
         printf("Password too short\n");
         return;
     }
@@ -90,11 +109,11 @@ void validatePassword(char* inputPassword) {
 int checkPasswordStrength(char* password) {
     // COMPLEJIDAD CICLOMÁTICA = 18
     if (password == NULL) return 0; // 1
-    if (strlen(password) < 8) return 0; // 2
+    if (safe_strlen(password, MAX_PASSWORD_LEN) < 8) return 0; // 2
 
     int hasUpper = 0, hasLower = 0, hasDigit = 0, hasSpecial = 0;
 
-    for (int i = 0; password[i] != '\0'; i++) { // 3
+    for (size_t i = 0; i < MAX_PASSWORD_LEN && password[i] != '\0'; i++) { // 3
         char c = password[i];
         if (c >= 'A' && c <= 'Z') hasUpper = 1; // 4
         else if (c >= 'a' && c <= 'z') hasLower = 1; // 5
@@ -117,21 +136,20 @@ int checkPasswordStrength(char* password) {
 // ============ CÓDIGO REFACTORIZADO: Complejidad ciclomática = 4 ============
 
 void validatePasswordSecure(char* inputPassword) {
-    if (inputPassword == NULL || strlen(inputPassword) > 31) {
+    if (inputPassword == NULL || safe_strlen(inputPassword, MAX_INPUT_LEN) > 31) {
         printf("Invalid password length\n");
         return;
     }
 
     char password[32];
-    strncpy(password, inputPassword, 31);
-    password[31] = '\0';
+    safe_strcpy(password, inputPassword, 32);
     printf("Password accepted\n");
 }
 
 int hasValidCharacters(char* password) {
     int hasUpper = 0, hasLower = 0, hasDigit = 0, hasSpecial = 0;
 
-    for (int i = 0; password[i] != '\0'; i++) {
+    for (size_t i = 0; i < MAX_PASSWORD_LEN && password[i] != '\0'; i++) {
         char c = password[i];
         if (c == ' ') return 0;
         if (c >= 'A' && c <= 'Z') hasUpper = 1;
@@ -154,7 +172,7 @@ int isCommonPassword(char* password) {
 int checkPasswordStrengthRefactored(char* password) {
     // COMPLEJIDAD CICLOMÁTICA = 4 (ACEPTABLE)
     if (password == NULL) return 0; // 1
-    if (strlen(password) < 8) return 0; // 2
+    if (safe_strlen(password, MAX_PASSWORD_LEN) < 8) return 0; // 2
     if (!hasValidCharacters(password)) return 0; // 3
     if (isCommonPassword(password)) return 0; // 4
     return 1;
